@@ -21,8 +21,11 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha4"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	// ClusterFinalizer allows us to clean up the KIND cluster resource associated with KINDCluster before
+	// removing it from the apiserver.
+	ClusterFinalizer = "kindcluster.infrastructure.cluster.x-k8s.io"
+)
 
 // KINDClusterSpec defines the desired state of KINDCluster
 type KINDClusterSpec struct {
