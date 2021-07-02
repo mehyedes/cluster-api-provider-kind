@@ -51,11 +51,19 @@ spec:
                 - host
                 - port
                 type: object
+              name:
+                description: Name represents the name of the KIND cluster
+                type: string
+            required:
+            - name
             type: object
           status:
             description: KINDClusterStatus defines the observed state of KINDCluster
             properties:
+              failureMessage:
+                type: string
               ready:
+                default: false
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'

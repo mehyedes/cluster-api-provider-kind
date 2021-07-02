@@ -120,18 +120,34 @@ func (r *KINDClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	createOption := KindClusterService.CreateWithKubeconfigPath(r.Kubeconfig)
 
-	log.Info("Creating KIND cluster")
-
-	err = r.KindProvider.Create(kindCluster.Name, createOption)
-	if err != nil {
-		// Populate the failureMessage field
-		return ctrl.Result{},
+	// Check if a KIND cluster with the same name already exists
+	clusterExists, kerror := kindUtil.AlreadyExists(r.KindProvider, kindCluster.Spec.Name)
+	if kerror != nil {
+		return ctrl.Result{}, fmt.Errorf(kerror.Error())
 	}
 
-	// Set controlePlaneEndpoint for the cluster
-	kubeconfigData, err := r.KindProvider.KubeConfig(kindCluster.Name, false)
+	if clusterExists {
+		if kindCluster.Spec.ControlPlaneEndpoint != nil {
+			log.Info("Cluster up-to-date: nothing to do here..")
+			return ctrl.Result{}, nil
+		}
+		log.Info("A KIND cluster already exists with the same name. Not creating")
+		kindCluster.Status.FailureReason = "KIND cluster already exists with the same name"
+	}
+
+	log.Info("Creating KIND cluster")
+
+	err = r.KindProvider.Create(kindCluster.Spec.Name, createOption)
+	if err != nil {
+		// Populate the failureMessage field
+		kindCluster.Status.FailureReason = err.Error()
+		return ctrl.Result{}, fmt.Errorf("failed to create KIND cluster: %w", err)
+	}
+
+	// Set controlPlaneEndpoint for the cluster
+	kubeconfigData, err := r.KindProvider.KubeConfig(kindCluster.Spec.Name, false)
 	host, port, err := kindUtil.GetControlPlane(kubeconfigData)
-	kindCluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{
+	kindCluster.Spec.ControlPlaneEndpoint = &clusterv1.APIEndpoint{
 		Host: host,
 		Port: port,
 	}
@@ -158,7 +174,7 @@ func (r *KINDClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 func reconcileDelete(kindCluster *infrastructurev1alpha4.KINDCluster, kindProvider *KindClusterService.Provider, kubeconfig string) (reconcile.Result, error) {
-	derror := kindProvider.Delete(kindCluster.Name, kubeconfig)
+	derror := kindProvider.Delete(kindCluster.Spec.Name, kubeconfig)
 	if derror != nil {
 		return ctrl.Result{}, derror
 	}

@@ -32,16 +32,24 @@ type KINDClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Name represents the name of the KIND cluster
+	// +required
+	Name string `json:"name"`
+
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint *clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 
 // KINDClusterStatus defines the observed state of KINDCluster
 type KINDClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:default=false
 	Ready bool `json:"ready"`
+
+	// +optional
+	FailureReason string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
